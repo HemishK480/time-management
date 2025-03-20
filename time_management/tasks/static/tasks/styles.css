@@ -392,6 +392,7 @@ textarea {
     margin-bottom: 40px;
 }
 
+
 .managebac-modal {
     display: none; 
     position: fixed; 
@@ -403,7 +404,7 @@ textarea {
     background-color: rgba(0,0,0,0.5); 
 }
 
-.modal-content {
+.modal-content-login {
     background: #fff;
     padding: 2rem;
     border-radius: 10px;
@@ -429,3 +430,60 @@ textarea {
     cursor: pointer;
 }
 
+
+/* Additional stuff for loading tasks from ManageBac */
+
+.modal-content-large {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    width: 90%;
+    text-align: center;
+    margin: 0 auto;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Spinner style for loading modal */
+.spinner {
+    margin: auto;
+    width: 30px;
+    height: 30px;
+    border: 6px solid #ccc;
+    border-top-color: #333;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Task section styling */
+.task-section {
+    margin-bottom: 20px;
+}
+
+.task-list {
+    height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.task-item {
+    border-bottom: 1px solid #eee;
+    padding: 8px 0;
+}
+
+button.load-more {
+    display: block;
+    margin: 0 auto;
+    padding: 10px 20px;
+    border: none;
+    background-color: #007BFF;
+    color: #fff;
+    cursor: pointer;
+    border-radius: 4px;
+}

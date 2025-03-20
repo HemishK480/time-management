@@ -79,7 +79,10 @@ def managebac(request):
         end = time.perf_counter()
         
         for i, task in enumerate(result["tasks"]):
-            print(f"{i}: {task["title"]}\n===========================================================")
+            if i == 0:
+                print("===========================================================")
+            print(f"{i+1}: \033]8;;{task["link"]}\033\\{task["title"]}\033]8;;\033\\")
+            print("===========================================================")
         print(f"Total time: {end - start:.4f} seconds")
 
         return JsonResponse({"message": "ManageBac login successful."}, status=200)

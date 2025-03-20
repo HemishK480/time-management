@@ -24,7 +24,7 @@
 </div>
 
 <div class="managebac-modal">
-    <div class="modal-content">
+    <div class="modal-content-login">
         <span class="close">&times;</span>
         <h2 class="managebac-heading">Import - ManageBac</h2>
         <form id="managebac-form">
@@ -39,6 +39,32 @@
             </div>
             <button type="submit" class="login-btn">Import</button>
         </form>
+    </div>
+</div>
+
+<div class="managebac-modal" id="loadingModal">
+    <div class="modal-content-large">
+        <div class="spinner"></div>
+        <p>Loading tasks...</p>
+    </div>
+</div>
+
+<div class="managebac-modal" id="tasksModal">
+    <div class="modal-content-large">
+        <div class="task-section" id="upcomingSection">
+            <h3>Upcoming Tasks</h3>
+            <div class="task-list" id="upcomingList">
+
+            </div>
+            <button id="loadMoreUpcoming" class="load-more">Load More</button>
+        </div>
+        <div class="task-section" id="completedSection">
+            <h3>Completed Tasks</h3>
+            <div class="task-list" id="completedList">
+
+            </div>
+            <button id="loadMoreCompleted" class="load-more">Load More Completed</button>
+        </div>
     </div>
 </div>
 
