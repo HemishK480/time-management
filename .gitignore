@@ -1,0 +1,25 @@
+# Python bytecode files
+*.pyc
+__pycache__/
+
+# Django specific:
+*.log
+local_settings.py
+db.sqlite3
+
+# Environment variables file
+.env
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editor/IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Backup files
+*.bak
+*.swp

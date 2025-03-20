@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
 
     // By default, load assignments
-    fetch_assignments(); 
+    fetchAssignments(); 
 
     document.querySelectorAll(".new-task").forEach(function(new_button) {
         new_button.addEventListener('click', function() {
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
 });
 
-function fetch_assignments() {
+function fetchAssignments() {
     // Fetch assignments from backend
     fetch(`/fetch-assignments`)
     .then(response => response.json())
