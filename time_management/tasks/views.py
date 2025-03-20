@@ -10,6 +10,8 @@ from django.contrib.auth import authenticate, login, logout
 from allauth.socialaccount.models import SocialAccount, SocialToken
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
+import cProfile, pstats, io
+
 
 from .models import Task
 
