@@ -1,0 +1,30 @@
+{% load static %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="{% static 'tasks/styles.css' %}">
+        {% block head %}
+        {% endblock %}
+    </head>
+    <body>
+
+        <!-- Navigation Bar -->
+        <header class="navbar">
+            <div class="logo">Procuratio</div>
+            <nav>
+            <a href="{% url 'logout' %}">Logout</a>
+            <a href="{% url 'index' %}">Tasks</a>
+            <a href="{% url 'profile' %}">Profile</a>
+            </nav>
+        </header>
+
+        <div id="main">
+            {% block body %}
+            {% endblock %}
+        </div>
+    </body>
+</html>
