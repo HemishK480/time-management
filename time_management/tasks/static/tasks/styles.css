@@ -434,15 +434,18 @@ textarea {
 /* Additional stuff for loading tasks from ManageBac */
 
 .modal-content-large {
-    background: #fff;
+    background: var(--white);
     padding: 2rem;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     width: 90%;
+    height: 80vh;
     text-align: center;
     margin: 0 auto;
     margin-top: 2rem;
     margin-bottom: 2rem;
+    display: flex;         
+    flex-direction: column;
 }
 
 /* Spinner style for loading modal */
@@ -461,29 +464,59 @@ textarea {
 
 /* Task section styling */
 .task-section {
-    margin-bottom: 20px;
+    flex: 1;               
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+}
+
+.task-section h3 {
+    flex: 0 0 auto; 
+    margin: 0;
+    padding: 0.5rem;
 }
 
 .task-list {
-    height: 200px;
+    flex: 1;        
+    min-height: 0;   
     overflow-y: auto;
-    border: 1px solid #ddd;
     padding: 10px;
     margin-bottom: 10px;
+    max-height: 300px;
+    scrollbar-color: var(--brown) var(--white);
 }
+
 
 .task-item {
-    border-bottom: 1px solid #eee;
-    padding: 8px 0;
+    border-bottom: 1px solid var(--light-brown);
+    padding: 8px;
+    border-radius: 8px;
+    margin: 8px;
+    overflow: auto; 
+    display: flex;
 }
 
-button.load-more {
-    display: block;
-    margin: 0 auto;
-    padding: 10px 20px;
-    border: none;
-    background-color: #007BFF;
-    color: #fff;
-    cursor: pointer;
-    border-radius: 4px;
+.task-name {
+    width: 200px;  
+    flex-shrink: 0; 
+}
+
+.task-description {
+    max-width: 100px;    
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;  
+}
+
+.task-item.selected {
+    background-color: #e5dbcf; 
+}
+
+.task-item:hover {
+    background-color: #e5dbcf; 
+}
+
+.loading-tasks {
+    margin-top: 20px;
+    align-items: center;
 }

@@ -27,7 +27,6 @@ import pprint
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 
-
 def login_managebac(domain, username, password):
     start = time.perf_counter()
     s = requests.Session()
@@ -66,16 +65,18 @@ def login_managebac(domain, username, password):
     return cookie
 
 
-def managebac(request):
+def managebac(request, page_num, type):
     if request.method == "PUT":
         data = json.loads(request.body)
         username = data.get("username")
         password = data.get("password")
         
+        print(username)
+        print(password)
         cookie = login_managebac("gwa", username, password)
         
         start = time.perf_counter()
-        result = asyncio.run(managebac_api.mbapi2("gwa", cookie))
+        result = asyncio.run(managebac_api.mbapi2(page_num, type, "gwa", cookie))
         end = time.perf_counter()
         
         for i, task in enumerate(result["tasks"]):
@@ -85,7 +86,7 @@ def managebac(request):
             print("===========================================================")
         print(f"Total time: {end - start:.4f} seconds")
 
-        return JsonResponse({"message": "ManageBac login successful."}, status=200)
+        return JsonResponse({"managebacTasks": result})
 
 
 @csrf_exempt

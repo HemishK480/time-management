@@ -163,13 +163,15 @@ async def fetch_task(session, base_url, task_url):
         'contains(@class, "flex-normal")]'
         )
         
-        
-    
     container = results[0] if results else print(f"URL {url}: no container")
     
     title_list = container.xpath('.//h4[@class="title"]/text()')
     title = title_list[0].strip() if title_list else "No Title"
     
+    subject_container = tree.xpath('.//a[@tooltip="Go to Overview"]/text()')
+    subject = subject_container[0].strip() if subject_container else "No Class Title"
+
+
     date_badge = container.xpath('.//div[contains(@class, "date-badge")]')
     if date_badge:
         day_list = date_badge[0].xpath('.//div[@class="day"]/text()')
@@ -207,12 +209,13 @@ async def fetch_task(session, base_url, task_url):
         "id": id_part,
         "link": url, 
         "title": title,
+        "subject": subject,
         "description": description_final,
         "due-date": f"{day}/{cal.get(month, 'Unknown')}"
     }
     return tdict
 
-async def fetch_urls(session, base_url, page_num):
+async def fetch_urls_upcoming(session, base_url, page_num):
         url = base_url + f"/student/tasks_and_deadlines?upcoming_page={page_num}"
         
         async with session.get(url) as resp:
@@ -238,20 +241,16 @@ async def fetch_urls(session, base_url, page_num):
                     
         return student_name, task_links
 
-async def fetch_urls_all(session, base_url, page_num):
-        url_upcoming = base_url + f"/student/tasks_and_deadlines?upcoming_page={page_num}"
-        url_completed = base_url + f"/student/tasks_and_deadlines?completed_page={page_num}"
-        async with session.get(url_upcoming) as resp:
-            html_upcoming = await resp.read()
+async def fetch_urls_completed(session, base_url, page_num):
+        url = base_url + f"/student/tasks_and_deadlines?completed_page={page_num}"
             
-        async with session.get(url_completed) as resp:
+        async with session.get(url) as resp:
             html_completed = await resp.read()
         
-        tree_upcoming = lxml.html.fromstring(html_upcoming)
-        tree_completed = lxml.html.fromstring(html_completed)
+        tree = lxml.html.fromstring(html_completed)
                 
         student_name = ""
-        title_list = tree_upcoming.xpath('//title/text()')
+        title_list = tree.xpath('//title/text()')
         if title_list:
             try:
                 student_name = title_list[0].split("| ")[1].strip()
@@ -259,9 +258,7 @@ async def fetch_urls_all(session, base_url, page_num):
                 print(e)
 
                 
-        results_upcoming = tree_upcoming.xpath('//div[contains(@class, "upcoming-tasks")]')
-        results_completed = tree_completed.xpath('//div[contains(@class, "completed")]')
-        results = results_upcoming + results_completed
+        results = tree.xpath('//div[contains(@class, "completed")]')
         
         task_links = []
         if results:
@@ -273,7 +270,7 @@ async def fetch_urls_all(session, base_url, page_num):
                     
         return student_name, task_links
     
-async def mbapi2(domain:str=None, cookie:str=None):
+async def mbapi2(page_num, type, domain:str=None, cookie:str=None):
     fdict = {"studentname": "", "tasks": []}
     domain = domain or None
     cookie = cookie or None
@@ -303,18 +300,15 @@ async def mbapi2(domain:str=None, cookie:str=None):
         }
         base_url = f"https://{domain}.managebac.com"
         async with aiohttp.ClientSession(headers=headers) as session:
-            valid_numbers = ["1", "2"]
+            
             start_inputtime = time.perf_counter()
-            url_amount = input("All (1) or only upcoming (2): ")
-            while url_amount not in valid_numbers:
-                url_amount = input("Not a valid input\nAll (1) or only upcoming (2): ")
             end_inputtime = time.perf_counter()
             
             start_urlfetchtime = time.perf_counter()
-            if url_amount == "1":
-                tasks_pages = [fetch_urls_all(session, base_url, i) for i in range(1, 11)] 
+            if type == "completed":
+                tasks_pages = [fetch_urls_completed(session, base_url, page_num)] 
             else: 
-                tasks_pages = [fetch_urls(session, base_url, i) for i in range(1, 11)] 
+                tasks_pages = [fetch_urls_upcoming(session, base_url, page_num)] 
             pages_results = await asyncio.gather(*tasks_pages)
             end_urlfetchtime = time.perf_counter()
             
