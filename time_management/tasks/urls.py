@@ -13,5 +13,7 @@ urlpatterns = [
     path('fetch-assignments/', views.fetch_assignments, name='fetch_assignments'),
     path('update-task-status/<int:task_id>/', views.update_task_status, name="update_task_status"),
     path('edit_assignment/<int:task_id>/', views.edit_assignment, name='edit_assignment'),
-    path('managebac/<int:page_num>/<str:type>', views.managebac, name='managebac')
+    path('managebac/tasks', views.managebac, name='managebac_tasks'),
+    path('managebac/login', views.login_managebac, name='managebac_login'),
+    path('managebac/add', views.managebac_tasks_save, name="managebac_add")
 ]

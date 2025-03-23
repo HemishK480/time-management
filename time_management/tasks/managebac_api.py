@@ -1,4 +1,5 @@
 import asyncio
+import json
 import time
 import aiohttp
 import lxml.html
@@ -73,7 +74,6 @@ def mbapi(domain:str=None, cookie:str=None):
             results = soup.find(class_="upcoming-tasks")
             try:
                 name = soup.find("title").text
-                print(name)
                 name = name.split('| ')[1]
                 tasks = results.find_all("div", class_="line task-node anchor js-presentation")
                 deadlines = results.find_all("div", class_="line")
@@ -145,17 +145,24 @@ def mbapi(domain:str=None, cookie:str=None):
     return fdict
 
 async def fetch_task(session, base_url, task_url):
+    start_time = time.perf_counter()
     url = base_url + task_url
     
+    CORE_TASK_REGEX = re.compile(r'/core_tasks/\d+$')
+    EVENT_REGEX = re.compile(r'/events/\d+$')
+
+    fetch_start = time.perf_counter()
     async with session.get(url) as resp:
         html = await resp.read()
-    
+    fetch_end = time.perf_counter()
+
+    parse_start = time.perf_counter()
     tree = lxml.html.fromstring(html)
     
-    if re.search(r'/core_tasks/\d+$', url):
+    if CORE_TASK_REGEX.search(url):
         results = tree.xpath('//div[contains(@class, "fusion-section-content") '
                         'and contains(@class, "core-task-details")]')
-    elif re.search(r'/events/\d+$', url):
+    elif EVENT_REGEX.search(url):
         results = tree.xpath(
         './/div[contains(@class, "fusion-card-item") and '
         'contains(@class, "flex") and '
@@ -182,9 +189,9 @@ async def fetch_task(session, base_url, task_url):
         day, month = "Unknown", "Unknown"
         
         
-    if re.search(r'/core_tasks/\d+$', url):
+    if CORE_TASK_REGEX.search(url):
         id_part = url.split("core_tasks/", 1)[1]
-    elif re.search(r'/events/\d+$', url):
+    elif EVENT_REGEX.search(url):
         id_part = url.split("events/", 1)[1]
     else:
         id_part = "Unknown"
@@ -204,6 +211,8 @@ async def fetch_task(session, base_url, task_url):
         description_final = "\n".join(description_lines) if description_lines else "No Description"
     else:
         description_final = "No Description"
+    parse_end = time.perf_counter()
+
 
     tdict = {
         "id": id_part,
@@ -213,6 +222,15 @@ async def fetch_task(session, base_url, task_url):
         "description": description_final,
         "due-date": f"{day}/{cal.get(month, 'Unknown')}"
     }
+
+
+    total_time = time.perf_counter() - start_time
+    if total_time > 0.5:  # Flag slow requests
+        print(f"Slow task fetch: {url}")
+        print(f"  Network: {fetch_end - fetch_start:.4f}s")
+        print(f"  Parsing: {parse_end - parse_start:.4f}s")
+        print(f"  Total: {total_time:.4f}s")
+    
     return tdict
 
 async def fetch_urls_upcoming(session, base_url, page_num):
@@ -293,24 +311,37 @@ async def mbapi2(page_num, type, domain:str=None, cookie:str=None):
     cookiecheck(cookie)
     domaincheck(domain)
     
+    timing = {}
+    timing["start"] = time.perf_counter()
+
     try:
+        t1 = time.perf_counter()
         headers = {
             "Cookie": f"_managebac_session={cookie}; hide_osc_announcement_modal=true",
             "Accept-Encoding": "br, gzip, deflate"
         }
         base_url = f"https://{domain}.managebac.com"
-        async with aiohttp.ClientSession(headers=headers) as session:
-            
-            start_inputtime = time.perf_counter()
-            end_inputtime = time.perf_counter()
-            
-            start_urlfetchtime = time.perf_counter()
+
+        timeout = aiohttp.ClientTimeout(total=10, connect=3, sock_connect=3, sock_read=5)
+        connector = aiohttp.TCPConnector(limit=20, ttl_dns_cache=300, force_close=False)
+        async with aiohttp.ClientSession(
+            headers=headers, 
+            connector=connector,
+            timeout=timeout,
+            raise_for_status=True
+        ) as session:
+            t2 = time.perf_counter()
+            timing["session_creation"] = t2 - t1
+       
             if type == "completed":
                 tasks_pages = [fetch_urls_completed(session, base_url, page_num)] 
             else: 
                 tasks_pages = [fetch_urls_upcoming(session, base_url, page_num)] 
+
+            t3 = time.perf_counter()
             pages_results = await asyncio.gather(*tasks_pages)
-            end_urlfetchtime = time.perf_counter()
+            t4 = time.perf_counter()
+            timing["url_gathering"] = t4 - t3
             
             student_name = ""
             taskurls = []
@@ -319,18 +350,38 @@ async def mbapi2(page_num, type, domain:str=None, cookie:str=None):
                     student_name = name
                 taskurls.extend(links)
             taskurls = list(set(taskurls)) 
-            print(len(taskurls))
 
-            start_tasksfetchtime = time.perf_counter()
+            t5 = time.perf_counter()
             task_details = await asyncio.gather(*(fetch_task(session, base_url, url) for url in taskurls))
+            t6 = time.perf_counter()
+            timing["task_details_gathering"] = t6 - t5
             task_details = [td for td in task_details if td is not None]
-            end_tasksfetchtime = time.perf_counter()
+            timing["task_count"] = len(taskurls)
+
             
-            print(f"User input time: {end_inputtime - start_inputtime:.4f} seconds")
-            print(f"Url fetch time: {end_urlfetchtime - start_urlfetchtime:.4f} seconds")
-            print(f"Task fetch time: {end_tasksfetchtime - start_tasksfetchtime:.4f} seconds")
         fdict["studentname"] = student_name
         fdict["tasks"] = task_details
     except Exception as e:
         print(e)
-    return fdict
+
+    timing["total"] = time.perf_counter() - timing["start"]
+    def format_seconds(seconds):
+        """Format time in appropriate units based on magnitude"""
+        if seconds < 0.001:
+            return f"{seconds*1000000:.2f} μs"  # microseconds
+        elif seconds < 1:
+            return f"{seconds*1000:.2f} ms"     # milliseconds
+        else:
+            return f"{seconds:.2f} s"           # seconds
+
+    # In your mbapi2 function, replace the final print statement with:
+    formatted_timing = {
+        "session_creation": format_seconds(timing["session_creation"]),
+        "url_gathering": format_seconds(timing["url_gathering"]),
+        "task_details_gathering": format_seconds(timing["task_details_gathering"]),
+        "task_count": timing["task_count"],  # Not a time measurement
+        "total": format_seconds(timing["total"]),
+        "average_per_task": format_seconds(timing["task_details_gathering"] / max(1, timing["task_count"]))
+    }
+
+    return fdict, formatted_timing

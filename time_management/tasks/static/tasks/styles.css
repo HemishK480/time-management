@@ -11,6 +11,7 @@
     --font-secondary: "Open Sans", Arial, sans-serif;
     }
 
+
 body {
     background-color: var(--white);
     font-family: var(--font-secondary);
@@ -510,6 +511,7 @@ textarea {
 
 .task-item.selected {
     background-color: #e5dbcf; 
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .task-item:hover {
@@ -519,4 +521,29 @@ textarea {
 .loading-tasks {
     margin-top: 20px;
     align-items: center;
+}
+
+button#managebacSubmit {
+    display: block;
+    margin: 0 auto;
+    padding: 10px 20px;
+    border: none;
+    width: 80%;
+    background-color: var(--brown);
+    color: #fff;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: 0.3s;
+}
+
+button#managebacSubmit:hover {
+    display: block;
+    margin: 0 auto;
+    padding: 10px 20px;
+    border: none;
+    width: 80%;
+    background-color: var(--light-brown);
+    color: #fff;
+    cursor: pointer;
+    border-radius: 4px;
 }

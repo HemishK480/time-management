@@ -27,67 +27,72 @@ import pprint
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 
-def login_managebac(domain, username, password):
-    start = time.perf_counter()
-    s = requests.Session()
-    login_page_url = f"https://{domain}.managebac.com/login"
-    
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36",
-        "Referer": login_page_url,
-    }
-    
-    r = s.get(login_page_url, headers=headers)
-    soup = BeautifulSoup(r.text, "html.parser")
-    token_elem = soup.find("input", {"name": "authenticity_token"})
-    authenticity_token = token_elem["value"] if token_elem else None
-    
-    if not authenticity_token:
-        raise Exception("Failed to retrieve token from the login page.")
-    
-    payload = {
-        "authenticity_token": authenticity_token,
-        "login": username,
-        "password": password,
-        "commit": "Sign in"
-    }
-    
-    sessions_url = f"https://{domain}.managebac.com/sessions"
-    r = s.post(sessions_url, data=payload, headers=headers, allow_redirects=True)
-    
-    cookie = s.cookies.get("_managebac_session")
-    if not cookie:
-        raise Exception("Login might have failed.")
-    
-    print("Retrieved cookie:", cookie)
-    end = time.perf_counter()
-    print(f"Cookie retrived in {end - start:.4f} seconds")
-    return cookie
+def login_managebac(request):
+    domain = "gwa"
 
-
-def managebac(request, page_num, type):
-    if request.method == "PUT":
+    if request.method == "POST":
         data = json.loads(request.body)
         username = data.get("username")
         password = data.get("password")
-        
-        print(username)
-        print(password)
-        cookie = login_managebac("gwa", username, password)
-        
+
         start = time.perf_counter()
-        result = asyncio.run(managebac_api.mbapi2(page_num, type, "gwa", cookie))
-        end = time.perf_counter()
+        s = requests.Session()
+        login_page_url = f"https://{domain}.managebac.com/login"
         
-        for i, task in enumerate(result["tasks"]):
-            if i == 0:
-                print("===========================================================")
-            print(f"{i+1}: \033]8;;{task["link"]}\033\\{task["title"]}\033]8;;\033\\")
-            print("===========================================================")
-        print(f"Total time: {end - start:.4f} seconds")
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.93 Safari/537.36",
+            "Referer": login_page_url,
+        }
+        
+        r = s.get(login_page_url, headers=headers)
+        soup = BeautifulSoup(r.text, "html.parser")
+        token_elem = soup.find("input", {"name": "authenticity_token"})
+        authenticity_token = token_elem["value"] if token_elem else None
+        
+        if not authenticity_token:
+            raise Exception("Failed to retrieve token from the login page.")
+        
+        payload = {
+            "authenticity_token": authenticity_token,
+            "login": username,
+            "password": password,
+            "commit": "Sign in"
+        }
+        
+        sessions_url = f"https://{domain}.managebac.com/sessions"
+        r = s.post(sessions_url, data=payload, headers=headers, allow_redirects=True)
+        
+        cookie = s.cookies.get("_managebac_session")
+        if not cookie:
+            raise Exception("Login might have failed.")
+        
+        print("Retrieved cookie:", cookie)
+        end = time.perf_counter()
+        print(f"Cookie retrived in {end - start:.4f} seconds")
+        return JsonResponse({"cookie": cookie})
+
+def managebac(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        cookie = data.get("cookie")
+        page_num = data.get("page_num")
+        type = data.get("type")
+                
+        result, formatted_timing = asyncio.run(managebac_api.mbapi2(page_num, type, "gwa", cookie))
+        
+        print(f"Performance breakdown:")
+        print(f"  Session creation:       {formatted_timing['session_creation']}")
+        print(f"  URL gathering:          {formatted_timing['url_gathering']}")
+        print(f"  Task details gathering: {formatted_timing['task_details_gathering']} ({formatted_timing['task_count']} tasks, avg {formatted_timing['average_per_task']} each)")
+        print(f"  Total time:             {formatted_timing['total']}")
 
         return JsonResponse({"managebacTasks": result})
 
+def managebac_tasks_save(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        print(data)
+    return JsonResponse({"managebacTasks": data})
 
 @csrf_exempt
 def index(request):
