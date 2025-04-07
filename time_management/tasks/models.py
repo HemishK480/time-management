@@ -27,14 +27,13 @@ class Task(models.Model):
     due_date = models.DateField(blank=True, null=True)
     importance = models.PositiveIntegerField(default=1)  # You can later refine how you calculate this
     source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='manual')
+    source_id = models.CharField(max_length=100, blank=True, null=True, help_text="External ID from the source system")
     completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='no_status')
 
     time_estimate = models.DurationField(help_text="Estimated time to complete the task (e.g., 2:30:00 for 2 hours 30 minutes)", default=timedelta())
-
-    managebac = models.JSONField(blank=True, null=True)
-
+    reasoning = models.TextField(blank=True)
     def __str__(self):
         return self.title
     

@@ -225,12 +225,12 @@ async def fetch_task(session, base_url, task_url):
 
 
     total_time = time.perf_counter() - start_time
-    if total_time > 0.5:  # Flag slow requests
-        print(f"Slow task fetch: {url}")
-        print(f"  Network: {fetch_end - fetch_start:.4f}s")
-        print(f"  Parsing: {parse_end - parse_start:.4f}s")
-        print(f"  Total: {total_time:.4f}s")
     
+    # print(f"Task fetch: {url}")
+    # print(f"  Network: {fetch_end - fetch_start:.4f}s")
+    # print(f"  Parsing: {parse_end - parse_start:.4f}s")
+    # print(f"  Total: {total_time:.4f}s")
+
     return tdict
 
 async def fetch_urls_upcoming(session, base_url, page_num):
@@ -292,13 +292,6 @@ async def mbapi2(page_num, type, domain:str=None, cookie:str=None):
     fdict = {"studentname": "", "tasks": []}
     domain = domain or None
     cookie = cookie or None
-    if domain == None and cookie == None:
-        domain = input("""What is the subdomain of your school's ManageBac site?\nEnter ONLY the subdomain (****).managebac.com:\n""")
-        cookie = input("""What is the session cookie of your ManageBac login?\nEnter ONLY the subdomain value, not the name of the cookie:\n""")
-    elif domain != None and cookie == None:
-        raise NoCookie
-    elif domain == None and cookie != None:
-        raise NoDomain
     def cookiecheck(cookie):
         if len(cookie)<30:
             raise NoCookie
@@ -374,12 +367,11 @@ async def mbapi2(page_num, type, domain:str=None, cookie:str=None):
         else:
             return f"{seconds:.2f} s"           # seconds
 
-    # In your mbapi2 function, replace the final print statement with:
     formatted_timing = {
         "session_creation": format_seconds(timing["session_creation"]),
         "url_gathering": format_seconds(timing["url_gathering"]),
         "task_details_gathering": format_seconds(timing["task_details_gathering"]),
-        "task_count": timing["task_count"],  # Not a time measurement
+        "task_count": timing["task_count"], 
         "total": format_seconds(timing["total"]),
         "average_per_task": format_seconds(timing["task_details_gathering"] / max(1, timing["task_count"]))
     }

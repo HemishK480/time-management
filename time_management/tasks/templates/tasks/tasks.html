@@ -1,0 +1,77 @@
+{% extends "tasks/layout.html" %}
+{% load static %}
+
+{% block head %}
+<title>Procuratio</title>
+<script src="{% static 'tasks/tasks.js' %}"></script>
+{% endblock %}
+
+{% block body %}
+<div class="header-wrapper">
+    <h1 class="task-title">Your Tasks</h1>
+</div>
+<div class="task-board">
+    <!-- To Do Column -->
+    <div class="task-column" data-status="not_started">
+        <div class="status-header">To Do</div>
+            <div class="task-add" id="todo">
+            </div>
+        <div class="new-task" data-status="not_started">+ New Task</div>
+    </div>
+
+    <!-- In Progress Column -->
+    <div class="task-column" data-status="in_progress">
+        <div class="status-header">In Progress</div>
+            <div class="task-add" id="in-progress">
+            </div>
+        <div class="new-task" data-status="in_progress">+ New Task</div>
+    </div>
+
+    <!-- Done Column -->
+    <div class="task-column" data-status="completed">
+        <div class="status-header">Done</div>
+            <div class="task-add" id="done">
+            </div>
+        <div class="new-task" data-status="completed">+ New Task</div>
+    </div>
+
+    <!-- No Status Column -->
+    <div class="task-column" data-status="no_status">
+        <div class="status-header">No Status</div>
+            <div class="task-add" id="no-status">
+            </div>
+        <div class="new-task" data-status="no_status">+ New Task</div>
+    </div>
+</div>
+
+<div id="taskModal" class="task-editor">
+    <form id="editTaskForm">
+        {% csrf_token %}
+
+        <input type="text" id="task-title" name="task-title" placeholder="Task Title"><br>
+        <div class="edit-container">
+            <h5>Due Date: </h5>
+            <input type="date" id="due-date" name="due-date"><br>
+        </div>
+        <div class="edit-container">
+            <h5>Status: </h5>
+            <select id="status-selector">
+                <option value="not_started">To Do</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Done</option>
+                <option value="no_status">No Status</option>
+            </select>
+        </div>
+        <div class="edit-container">
+            <h5>Time Estimate: </h5>
+            <input type="text" id="time-estimate" name="time-estimate"><br>
+        </div>
+
+        <hr>
+        <textarea id="task-description" name="task-description" rows="4" placeholder="Description"></textarea><br>
+
+    </form>
+</div>
+
+    
+{% endblock %}

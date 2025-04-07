@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    // By default, load assignments
-    fetchAssignments(); 
+    // By default, load tasks
+    fetchTasks(); 
 
     document.querySelectorAll(".new-task").forEach(function(new_button) {
         new_button.addEventListener('click', function() {
@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById("task-title").value = "";
             document.getElementById("due-date").value = "";
             document.getElementById("task-description").value = "";
+            document.getElementById("time-estimate").value = "";
 
             displayNewTaskModal()
         })
@@ -22,13 +23,73 @@ document.addEventListener('DOMContentLoaded', function() {
     
 });
 
-function fetchAssignments() {
+function getTruncated(words, maxChars) {
+    if (words.length > maxChars) {
+        return words.slice(0, maxChars) + '...';
+    }
+    return words;
+}
+
+function parseISOtoDuration(durationString) {
+    if (!durationString) return "";
+    
+    // Handle ISO 8601 duration format like "P0DT00H15M00S"
+    try {
+        // Extract days, hours, minutes, seconds
+        const dayMatch = durationString.match(/(\d+)D/);
+        const hourMatch = durationString.match(/(\d+)H/);
+        const minuteMatch = durationString.match(/(\d+)M/);
+        const secondMatch = durationString.match(/(\d+)S/);
+        
+        const days = dayMatch ? parseInt(dayMatch[1]) : 0;
+        const hours = hourMatch ? parseInt(hourMatch[1]) : 0;
+        const minutes = minuteMatch ? parseInt(minuteMatch[1]) : 0;
+        const seconds = secondMatch ? parseInt(secondMatch[1]) : 0;
+        
+        let result = "";
+        if (days > 0) result += `${days} day${days > 1 ? 's' : ''} `;
+        if (hours > 0) result += `${hours} hour${hours > 1 ? 's' : ''} `;
+        if (minutes > 0) result += `${minutes} minute${minutes > 1 ? 's' : ''} `;
+        if (seconds > 0) result += `${seconds} second${seconds > 1 ? 's' : ''} `;
+        
+        return result.trim() || "0 minutes";
+    } catch (e) {
+        console.error("Error parsing duration:", e);
+        return durationString; // Return original if parsing fails
+    }
+}
+
+function parseDurationToISO(durationString) {
+    if (!durationString) return 0;
+    
+    // Parse a human-readable duration string back to total seconds
+    const dayRegex = /(\d+)\s*day[s]?/;
+    const hourRegex = /(\d+)\s*hour[s]?/;
+    const minuteRegex = /(\d+)\s*minute[s]?/;
+    const secondRegex = /(\d+)\s*second[s]?/;
+    
+    const dayMatch = durationString.match(dayRegex);
+    const hourMatch = durationString.match(hourRegex);
+    const minuteMatch = durationString.match(minuteRegex);
+    const secondMatch = durationString.match(secondRegex);
+    
+    const days = dayMatch ? parseInt(dayMatch[1]) : 0;
+    const hours = hourMatch ? parseInt(hourMatch[1]) : 0;
+    const minutes = minuteMatch ? parseInt(minuteMatch[1]) : 0;
+    const seconds = secondMatch ? parseInt(secondMatch[1]) : 0;
+    
+    // Convert everything to seconds (Django will convert to timedelta)
+    const totalSeconds = days * 24 * 60 * 60 + hours * 60 * 60 + minutes * 60 + seconds;
+    
+    return totalSeconds;
+}
+
+function fetchTasks() {
     // Fetch assignments from backend
     fetch(`/fetch-assignments`)
     .then(response => response.json())
     .then(data => {
         const assignments = data.assignments; 
-        console.log(assignments)
 
         assignments.forEach(assignment => {
             // Create a div, add class and draggable, as well as status and id
@@ -40,13 +101,22 @@ function fetchAssignments() {
 
             // Create and append title and due date
             const title = document.createElement("h4");
-            title.innerHTML = assignment["title"];
-
+            title.innerHTML = getTruncated(assignment["title"], 20);
+            title.title = assignment["title"];
 
             const duedate = document.createElement("small");
             duedate.innerHTML = `Due: ${assignment["due_date"]}`;
 
-            div.append(title, duedate);
+            // Create delete button
+            const deleteButton = document.createElement("button");
+            deleteButton.setAttribute("class", "delete-task-btn");
+            deleteButton.innerHTML = "×";
+            deleteButton.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent opening the task modal
+                deleteTask(assignment["id"], div);
+            });
+
+            div.append(title, duedate, deleteButton);
             
             // Check which column to put task in depending on status
             if (assignment["status"] === 'not_started') {
@@ -61,7 +131,6 @@ function fetchAssignments() {
 
             // Add an event listener to check if the task is clicked on
             div.addEventListener('click', () => openTask(assignment['id']));
-
         })
 
         let selected = null; 
@@ -103,7 +172,9 @@ function openTask(taskId) {
         const description = document.getElementById("task-description").value;
         const dueDate = document.getElementById("due-date").value;
         const status = document.getElementById("status-selector").value;
-        updateTask(currentTaskId, title, description, dueDate, status)
+        const timeEstimate = document.getElementById("time-estimate").value;
+
+        updateTask(currentTaskId, title, description, dueDate, status, timeEstimate)
         .then(() => {
             fetchTask(taskId);
         })
@@ -117,7 +188,7 @@ function openTask(taskId) {
 
 function fetchTask(taskId) {
     // Calls for the details of a specific task
-    fetch(`/edit_assignment/${taskId}/`)
+    fetch(`/edit-assignment/${taskId}/`)
     .then(response => response.json())
     .then(data => {
 
@@ -125,7 +196,7 @@ function fetchTask(taskId) {
         document.getElementById("task-description").value = data.description;
         document.getElementById("due-date").value = data.due_date;
         document.getElementById("status-selector").value = data.status;
-
+        document.getElementById("time-estimate").value = parseISOtoDuration(data.time_estimate);
     })
     
     // Shows the task modal 
@@ -161,7 +232,8 @@ function outsideClickListener(e, taskId, use) {
         const description = document.getElementById("task-description").value;
         const dueDate = document.getElementById("due-date").value;
         const status = document.getElementById("status-selector").value;
-
+        const timeEstimate = document.getElementById("time-estimate").value;
+        
         // Checks if there is enough data to create new task
         if (!title || !dueDate ){
             console.log("Title or Due Date is missing. Skipping the update.");
@@ -169,9 +241,9 @@ function outsideClickListener(e, taskId, use) {
         } else {
             // Checks which use case and updates accordingly
             if (use === 'edit'){
-                updateTask(taskId, title, description, dueDate, status)
+                updateTask(taskId, title, description, dueDate, status, timeEstimate)
             } else if (use === 'new') {
-                newTask(title, description, dueDate, status)
+                newTask(title, description, dueDate, status, timeEstimate)
             }
         }
     }
@@ -179,13 +251,13 @@ function outsideClickListener(e, taskId, use) {
 
 }
 
-function updateTask(taskId, title, description, dueDate, status) {
+function updateTask(taskId, title, description, dueDate, status, timeEstimate) {
     // Gets the id of the task and the status
     const taskDiv = document.querySelector(`div[data-id="${taskId}"]`);
     const currentStatus = taskDiv.getAttribute('data-status'); 
 
     // Changes the task card details based on update
-    taskDiv.querySelector('h4').innerHTML = title;
+    taskDiv.querySelector('h4').innerHTML = getTruncated(title, 20);
     taskDiv.querySelector('small').innerHTML = `Due: ${dueDate}`;
 
     // Checks if the status is equal to the current status, if it isn't, updates the task card
@@ -203,14 +275,19 @@ function updateTask(taskId, title, description, dueDate, status) {
         taskDiv.setAttribute('data-status', status);
     }
 
+    // Convert timeEstimate back to seconds for backend
+    const timeEstimateSeconds = parseDurationToISO(timeEstimate);
+    console.log("Time estimate in seconds:", timeEstimateSeconds);
+
     // Updates the task in the backend
-    return fetch(`/edit_assignment/${taskId}/`, {  
+    return fetch(`/edit-assignment/${taskId}/`, {  
         method: "PUT",  
         body: JSON.stringify({ 
             title: title,
             description: description,
             due_date: dueDate,
-            status: status
+            status: status,
+            time_estimate: timeEstimateSeconds
         }),  
         headers: {
             "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value,
@@ -254,12 +331,12 @@ function displayNewTaskModal () {
     }, 10);
 }
 
-function newTask(title, description, dueDate, status) {
-    // Creates a new task card
-    const div = document.createElement('div');
-
+function newTask(title, description, dueDate, status, timeEstimate) {
+    // Convert timeEstimate back to seconds for backend
+    const timeEstimateSeconds = parseDurationToISO(timeEstimate);
+    
     // Adds new task to backend
-    fetch("/", {
+    fetch("/new-task/", {
         method: "POST",
         headers: {
             "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value,
@@ -269,42 +346,77 @@ function newTask(title, description, dueDate, status) {
             title: title,
             description: description,
             due_date: dueDate,
-            status: status
+            status: status,
+            time_estimate: timeEstimateSeconds
         })
     })
     .then(response => response.json())
     .then(data => {
         if (data.status === "success") {
-            console.log("Task added")
-            div.setAttribute("data-id", data.task_id)
+            // Creates a new task card
+            const div = document.createElement('div');
+            
+            // Sets attributes and adds the task card to the necessary column
+            div.setAttribute("class", "task-card");
+            div.setAttribute("draggable", "true");  
+            div.setAttribute("data-id", data.task_id);
+            div.setAttribute("data-status", status)
+
+            const title_container = document.createElement("h4");
+            title_container.innerHTML = title;
+
+
+            const duedate = document.createElement("small");
+            duedate.innerHTML = `Due: ${dueDate}`;
+
+            // Create delete button
+            const deleteButton = document.createElement("button");
+            deleteButton.setAttribute("class", "delete-task-btn");
+            deleteButton.innerHTML = "×";
+            deleteButton.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent opening the task modal
+                deleteTask(data.task_id, div);
+            });
+
+            div.append(title_container, duedate, deleteButton);
+            
+            if (status === 'not_started') {
+                document.querySelector('#todo').append(div);
+            } else if (status === 'in_progress') {
+                document.querySelector('#in-progress').append(div);
+            } else if (status === 'completed') {
+                document.querySelector('#done').append(div);
+            } else {
+                document.querySelector('#no-status').append(div);
+            }
+
+            div.addEventListener('click', () => openTask(data.task_id));
         }
     })
+}
 
-    // Sets attributes and adds the task card to the necessary column
-    div.setAttribute("class", "task-card");
-    div.setAttribute("draggable", "true");  
+// Function to delete a task
+function deleteTask(taskId, taskElement) {
+    fetch(`/delete-task/${taskId}/`, {
+        method: "DELETE",
+        headers: {
+            "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value,
+            "Content-Type": "application/json"
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            // Remove the task element from the DOM
+            taskElement.remove();
+            console.log("Task deleted successfully");
+        } else {
+            console.error("Error deleting task:", data.error);
+        }
+    })
+    .catch(error => {
+        console.error("Error deleting task:", error);
+    });
     
-    div.setAttribute("data-status", status)
-
-    const title_container = document.createElement("h4");
-    title_container.innerHTML = title;
-
-
-    const duedate = document.createElement("small");
-    duedate.innerHTML = `Due: ${dueDate}`;
-
-    div.append(title_container, duedate);
-    
-    if (status === 'not_started') {
-        document.querySelector('#todo').append(div);
-    } else if (status === 'in_progress') {
-        document.querySelector('#in-progress').append(div);
-    } else if (status === 'completed') {
-        document.querySelector('#done').append(div);
-    } else {
-        document.querySelector('#no-status').append(div);
-    }
-
-    div.addEventListener('click', () => openTask(data.task_id));
 }
 

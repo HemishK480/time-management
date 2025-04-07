@@ -3,71 +3,324 @@
 
 {% block head %}
 <title>Procuratio</title>
-<script src="{% static 'tasks/tasks.js' %}"></script>
+<script src="{% static 'tasks/index.js' %}"></script>
+<style>
+    :root {
+        /* Color Palette - Spiced*/
+        --dark-brown: #3c2f2f;
+        --red: #854442;
+        --brown:#4b3832;
+        --light-brown: #be9b7b;
+        --white: #fff4e6;
+        --background-red: rgba(190, 155, 123, 0.4);
+        /* Typography */
+        --font-primary: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        --font-secondary: "Open Sans", Arial, sans-serif;
+        /* Base size for rem calculations */
+        font-size: 16px;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    .progress-container {
+        width: 100%;
+        background-color: var(--dark-brown);
+        padding: 1rem 2rem;
+        color: var(--white);
+        box-sizing: border-box;
+    }
+
+    .progress-text {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-family: var(--font-primary);
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 0.5rem;
+        background-color: var(--white);
+        border-radius: 0.25rem;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .progress-fill {
+        width: 56%;  /* Sample completion percentage */
+        height: 100%;
+        background-color: var(--light-brown);
+        border-radius: 0.25rem;
+        transition: width 0.3s ease;
+        position: absolute;
+        left: 0;
+        top: 0;
+    }
+
+    .time-selector-container {
+        background-color: var(--light-brown);
+        padding: 1.5rem;
+        border-radius: 1rem;
+        margin: 1rem 2rem;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        color: var(--dark-brown);
+    }
+
+    .time-selector-title {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+        font-weight: bold;
+        text-align: center;
+        font-family: var(--font-primary);
+    }
+
+    .time-selector-controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .time-input {
+        width: 4rem;
+        padding: 0.5rem;
+        text-align: center;
+        border: none;
+        border-radius: 0.25rem;
+        background-color: var(--white);
+        font-size: 1.2rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .time-unit {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+    .save-time-btn {
+        display: block;
+        background-color: var(--dark-brown);
+        color: white;
+        border: none;
+        padding: 0.5rem 1.5rem;
+        border-radius: 0.5rem;
+        margin: 1rem auto 0;
+        cursor: pointer;
+        font-family: var(--font-primary);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .container {
+        display: flex;
+        padding: 2rem;
+        gap: 2rem;
+    }
+
+    .subtask-container {
+        background-color: var(--red);
+        padding: 1rem;
+        border-radius: 1rem;
+        height: 50%;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .main-content {
+        flex: 2;  /* Takes up 2/3 of the available space */
+    }
+
+    .task-card {
+        background-color: var(--red);
+        padding: 1rem;
+        border-radius: 1rem;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .task-card.selected {
+        background-color: var(--light-brown);
+    }
+
+    .task-header {
+        background-color: var(--dark-brown);
+        color: white;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .subtask {
+        background-color: var(--light-brown);
+        padding: 0.8rem;
+        margin: 0.5rem 0;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .complete-btn {
+        background-color: var(--dark-brown);
+        color: white;
+        border: none;
+        padding: 0.8rem;
+        width: 100%;
+        border-radius: 0.5rem;
+        margin-top: 1rem;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .pomodoro-card {
+        background-color: var(--light-brown);
+        padding: 1.5rem;
+        border-radius: 1rem;
+        margin-top: 1rem;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .pomodoro-title {
+        background-color: var(--dark-brown);
+        color: white;
+        padding: 0.8rem;
+        border-radius: 0.5rem;
+        text-align: center;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .timer {
+        font-size: 3rem;
+        text-align: center;
+        margin: 1rem 0;
+    }
+
+    .pause-btn {
+        background-color: var(--dark-brown);
+        color: white;
+        border: none;
+        padding: 0.5rem 2rem;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        display: block;
+        margin: 0 auto;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .tasks-sidebar {
+        background-color: var(--dark-brown);
+        padding: 1.5rem;
+        border-radius: 1rem;
+        flex: 1; 
+        max-height: 100%;
+        color: white;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .sidebar-title {
+        background-color: var(--light-brown);
+        color: var(--dark-brown);
+        padding: 0.8rem;
+        border-radius: 0.5rem;
+        text-align: center;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .task-item {
+        background-color: var(--light-brown);
+        padding: 1rem;
+        margin: 0.5rem 0;
+        border-radius: 0.5rem;
+        color: var(--dark-brown);
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .add-task-btn {
+        background-color: var(--dark-brown);
+        color: white;
+        border: none;
+        padding: 1rem 1.5rem;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        text-align: center;
+    }
+
+    .add-task-btn:hover {
+        background-color: #2b2222;
+    }
+
+    .add-subtask-btn {
+        background-color: var(--red);
+        color: white;
+        border: none;
+        padding: 1rem 1.5rem;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        text-align: center;
+    }
+
+    .add-subtask-btn:hover {
+        background-color: #673432;
+    }
+    
+
+    .task-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        height: 100%;
+        overflow-y: auto;
+    }
+</style>
 {% endblock %}
 
 {% block body %}
-<div class="header-wrapper">
-    <h1 class="task-title">Your Tasks</h1>
-</div>
-<div class="task-board">
-    <!-- To Do Column -->
-    <div class="task-column" data-status="not_started">
-        <div class="status-header">To Do</div>
-            <div class="task-add" id="todo">
-            </div>
-        <div class="new-task" data-status="not_started">+ New Task</div>
+<div class="progress-container">
+    <div class="progress-text">
+        <span>Today's Progress</span>
+        <span>56%</span>
     </div>
-
-    <!-- In Progress Column -->
-    <div class="task-column" data-status="in_progress">
-        <div class="status-header">In Progress</div>
-            <div class="task-add" id="in-progress">
-            </div>
-        <div class="new-task" data-status="in_progress">+ New Task</div>
-    </div>
-
-    <!-- Done Column -->
-    <div class="task-column" data-status="completed">
-        <div class="status-header">Done</div>
-            <div class="task-add" id="done">
-            </div>
-        <div class="new-task" data-status="completed">+ New Task</div>
-    </div>
-
-    <!-- No Status Column -->
-    <div class="task-column" data-status="no_status">
-        <div class="status-header">No Status</div>
-            <div class="task-add" id="no-status">
-            </div>
-        <div class="new-task" data-status="no_status">+ New Task</div>
+    <div class="progress-bar">
+        <div class="progress-fill"></div>
     </div>
 </div>
 
-<div id="taskModal" class="task-editor">
-    <form id="editTaskForm">
+<div class="time-selector-container">
+    <div class="time-selector-title">How much time do you have for tasks today?</div>
+    <div class="time-selector-controls">
+        <input type="number" min="0" max="23" value="4" class="time-input" id="hoursInput">
+        <span class="time-unit">hours</span>
+        <input type="number" min="0" max="59" value="0" class="time-input" id="minutesInput">
+        <span class="time-unit">minutes</span>
+    </div>
+    <button class="save-time-btn" id="saveTimeBtn">Save</button>
+</div>
+
+<div class="container">
+    <div class="main-content">
+        <div class="subtask-container">
+            <div class="task-header" id="task-header">Choose a task to create subtasks</div>
+            <div class="add-subtask-btn" id="addSubtaskBtn">Select task to create subtasks</div>
+            <!-- <div class="subtask">Subtask 1 - subtask</div>
+            <div class="subtask">Subtask 2 - subtask</div>
+            <div class="subtask">Subtask 3 - subtask</div>
+            <div class="subtask">Subtask 4 - subtask</div> -->
+        </div>
+
+        <div class="pomodoro-card">
+            <div class="pomodoro-title">Pomodoro Timer</div>
+            <div class="timer">25:00</div>
+            <button class="pause-btn">Start</button>
+        </div>
+    </div>
+
+    <div class="tasks-sidebar">
         {% csrf_token %}
-
-        <input type="text" id="task-title" name="task-title" placeholder="Task Title"><br>
-        <div class="edit-container">
-            <h5>Due Date: </h5>
-            <input type="date" id="due-date" name="due-date"><br>
-        </div>
-        <div class="edit-container">
-            <h5>Status: </h5>
-            <select id="status-selector">
-                <option value="not_started">To Do</option>
-                <option value="in_progress">In Progress</option>
-                <option value="completed">Done</option>
-                <option value="no_status">No Status</option>
-            </select>
-        </div>
-
-        <hr>
-        <textarea id="task-description" name="task-description" rows="4" placeholder="Description"></textarea><br>
-
-    </form>
+        <div class="sidebar-title">Tasks for today</div>
+        <div class="add-task-btn" id="addTaskBtn">+ Add Tasks</div>
+    </div>
 </div>
 
-    
 {% endblock %}

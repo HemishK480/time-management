@@ -9,8 +9,9 @@
     /* Typography */
     --font-primary: "Helvetica Neue", Helvetica, Arial, sans-serif;
     --font-secondary: "Open Sans", Arial, sans-serif;
-    }
-
+    /* Base size for rem calculations */
+    font-size: 16px;
+}
 
 body {
     background-color: var(--white);
@@ -21,10 +22,9 @@ body {
     justify-content: center;
 }
 
-
 .task-title {
     flex-basis: 100%;
-    margin: 40px;
+    margin: 2.5rem;
     text-align: center;
 }
 
@@ -44,36 +44,40 @@ body {
 }
 
 .navbar .logo {
-    color: #fff;
+    text-decoration: none;
+    color: var(--white);
     font-family: var(--font-primary);
     font-size: 1.5rem;
     font-weight: bold;
 }
 
+.navbar .logo:hover {
+    text-decoration: none;
+    color: var(--white);
+}
+
 .navbar nav a {
-    color: #fff;
+    color: var(--white);
     font-family: var(--font-primary);
     margin-left: 1rem;
     text-decoration: none;
 }
 
-
-
 /* Task board layout using grid */
 .task-board {
     display: grid;
     grid-template-columns: repeat(4, 1fr); 
-    gap: 20px;
-    padding: 20px;
+    gap: 1.25rem;
+    padding: 1.25rem;
     width: 80%;
-    max-width: 1200px;
+    max-width: 75rem;
     margin: 0 auto; 
 }
 
 .task-column {
     background-color: var(--brown); 
     border-radius: 8px;
-    padding: 15px;
+    padding: 1rem;
     overflow-y: auto;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 }
@@ -81,29 +85,26 @@ body {
 .task-column h3 {
     text-align: center;
     color: white;
-    margin-bottom: 10px;
-    font-size: 1.5em;
+    margin-bottom: 0.625rem;
+    font-size: 1.5rem;
 }
 
 /* Task cards styling */
 .task-card {
     background-color: var(--light-brown); 
     color: white;
-    padding: 10px;
-    margin-bottom: 10px;
+    padding: 0.925rem;
+    margin-bottom: 0.625rem;
     border-radius: 4px;
     border: 1px solid var(--dark-brown);
-    margin-top: 10px;
+    margin-top: 0.625rem;
+    position: relative;
     transition: 0.3s;
     cursor: grab;
 
     word-wrap: break-word;   
     overflow-wrap: break-word;
     white-space: normal;  
-
-    opacity: 1 !important;
-    transform: none !important;
-    z-index: 9999; 
 
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 }
@@ -113,12 +114,12 @@ body {
 }
 
 .task-card h4 {
-    font-size: 1.2em;
+    font-size: 1.2rem;
     margin: 0;
 }
 
 .task-card p {
-    font-size: 0.9em;
+    font-size: 0.9rem;
 }
 
 .task-card[draggable="true"]:active,
@@ -127,12 +128,10 @@ body {
     transform: none !important;
 }
 
-
-
 /* Header for each column (status) */
 .status-header {
     background-color: var(--light-brown);
-    padding: 10px;
+    padding: 0.625rem;
     border-radius: 6px;
     color: var(--dark-brown);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
@@ -142,14 +141,13 @@ body {
 .new-task {
     background-color: var(--red);
     color: var(--white);
-    padding: 10px;
+    padding: 0.625rem;
     text-align: center;
     border-radius: 4px;
     cursor: pointer;
-    margin-top: 10px;
+    margin-top: 0.625rem;
     display: block;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-
 }
 
 .new-task:hover {
@@ -174,7 +172,6 @@ body {
     color: var(--dark-brown);
 }
 
-
 /* Loading screen */
 .loading-screen {
     position: fixed;
@@ -192,7 +189,6 @@ body {
     display: none; /* Hidden by default */
 }
 
-
 /* Login Box */
 #login-box {
     background: #fff;
@@ -204,7 +200,6 @@ body {
     margin: 0 auto;
     margin-top: 40px;
 }
-
 
 /* Input Group */
 .input-group {
@@ -285,7 +280,6 @@ body {
 }
 
 /* Task Editor */
-
 .task-editor {
     position: fixed;
     top: 0;
@@ -383,7 +377,6 @@ textarea {
 }
 
 /* Profile Page */
-
 .profile-connections {
     margin: 40px;
 }
@@ -392,7 +385,6 @@ textarea {
     margin-left: auto;
     margin-bottom: 40px;
 }
-
 
 .managebac-modal {
     display: none; 
@@ -431,9 +423,7 @@ textarea {
     cursor: pointer;
 }
 
-
 /* Additional stuff for loading tasks from ManageBac */
-
 .modal-content-large {
     background: var(--white);
     padding: 2rem;
@@ -487,7 +477,6 @@ textarea {
     scrollbar-color: var(--brown) var(--white);
 }
 
-
 .task-item {
     border-bottom: 1px solid var(--light-brown);
     padding: 8px;
@@ -523,7 +512,7 @@ textarea {
     align-items: center;
 }
 
-button#managebacSubmit {
+button#submitTasks {
     display: block;
     margin: 0 auto;
     padding: 10px 20px;
@@ -536,7 +525,7 @@ button#managebacSubmit {
     transition: 0.3s;
 }
 
-button#managebacSubmit:hover {
+button#submitTasks:hover {
     display: block;
     margin: 0 auto;
     padding: 10px 20px;
@@ -546,4 +535,28 @@ button#managebacSubmit:hover {
     color: #fff;
     cursor: pointer;
     border-radius: 4px;
+}
+
+/* Delete task button styling */
+.delete-task-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: transparent;
+    color: var(--dark-brown);
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.delete-task-btn:hover {
+    background-color: rgba(60, 47, 47, 0.2);
+    color: var(--red);
 }

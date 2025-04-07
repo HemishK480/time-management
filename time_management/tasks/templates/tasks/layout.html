@@ -14,11 +14,11 @@
 
         <!-- Navigation Bar -->
         <header class="navbar">
-            <div class="logo">Procuratio</div>
+            <a href="{% url 'index' %}" class="logo">Procuratio</a>
             <nav>
-            <a href="{% url 'logout' %}">Logout</a>
-            <a href="{% url 'index' %}">Tasks</a>
-            <a href="{% url 'profile' %}">Profile</a>
+                <a href="{% url 'tasks' %}">Tasks</a>
+                <a href="{% url 'profile' %}">Profile</a>
+                <a href="{% url 'logout' %}">Logout</a>
             </nav>
         </header>
 

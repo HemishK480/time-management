@@ -27,7 +27,7 @@ SECRET_KEY = "django-insecure-*v+y&l=ejyxeh4bo4h%e5%@35=who!y7!v-nea5^$v+-&kkbq9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '5.193.0.14', 'procuratiotasks.duckdns.org']
 
 
 # Application definition
@@ -57,6 +57,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
 ]
 
 ROOT_URLCONF = "time_management.urls"
@@ -126,6 +127,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -159,4 +162,4 @@ SOCIALACCOUNT_GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 SOCIALACCOUNT_GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 
 LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "/login"
+LOGOUT_REDIRECT_URL = "/login"  
