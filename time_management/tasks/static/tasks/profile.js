@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 "Content-Type": "application/json",
             }
         })
+        .then(handleApiError)
         .then(response => response.json())
         .then(data => {
             if (data.error) {
@@ -354,6 +355,22 @@ function renderTasks(tasks, containerId) {
     container.appendChild(fragment);
 }
 
-
-
+function handleApiError(response) {
+    if (!response.ok) {
+        return response.json().then(data => {
+            // Check if this is a token expiration error
+            if (data.code === "TOKEN_EXPIRED" && data.redirect) {
+                // Show a message to the user
+                alert(data.error);
+                // Redirect to the login page
+                window.location.href = data.redirect;
+                return Promise.reject(new Error("Redirecting to login page"));
+            }
+            
+            // For other errors, just throw the error
+            throw new Error(data.error || "An error occurred");
+        });
+    }
+    return response;
+}
 

@@ -25,5 +25,4 @@ urlpatterns = [
 
     path('estimate-time/', views.estimate_task_time, name='estimate_task_time'),
     path('schedule-tasks/', views.schedule_tasks, name='schedule_tasks'),
-    path('create-subtasks/', views.create_subtasks, name='create_subtasks'),
 ]

@@ -18,7 +18,7 @@ import hashlib
 from django.conf import settings
 from django.utils import timezone
 
-from .models import Task
+from .models import Task, SubTask
 
 import pprint
 
@@ -26,6 +26,8 @@ from datetime import datetime, date, timedelta
 
 from tasks import managebac_api
 
+from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import login_required
 # Create your views here.
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
@@ -222,7 +224,12 @@ def get_google_token(user):
                         social_token.save()
                         return social_token.token
                     else:
-                        print("Failed to refresh token:", new_token)
+                        error_message = new_token.get('error_description', 'Unknown error')
+                        print(f"Failed to refresh token: {new_token}")
+                        # If the refresh token is invalid, we should delete it
+                        if new_token.get('error') == 'invalid_grant':
+                            social_token.delete()
+                            print("Deleted invalid refresh token")
                         return None
                 except Exception as e:
                     print(f"Failed to refresh token: {str(e)}")
@@ -237,15 +244,15 @@ def get_google_token(user):
         return None
 
 def google_tasks(request):
-    print("google_tasks")
     access_token = get_google_token(request.user)
 
     if not access_token:
         print("Failed to fetch Google token.")
         return JsonResponse({
-            "error": "Failed to fetch Google token. Please try logging in again.",
-            "code": "TOKEN_ERROR"
-        }, status=400)
+            "error": "Your Google session has expired. Please log in again.",
+            "code": "TOKEN_EXPIRED",
+            "redirect": "/login/"
+        }, status=401)
 
     try:
         # First, get all courses
@@ -262,10 +269,11 @@ def google_tasks(request):
             error_message = courses_data.get('error', {}).get('message', 'Unknown error')
             error_code = courses_data.get('error', {}).get('code', 'UNKNOWN_ERROR')
             
-            if error_code == 401:
+            if error_code == 401 or 'invalid_grant' in error_message:
                 return JsonResponse({
                     "error": "Your Google session has expired. Please log in again.",
-                    "code": "TOKEN_EXPIRED"
+                    "code": "TOKEN_EXPIRED",
+                    "redirect": "/login/"
                 }, status=401)
             
             return JsonResponse({
@@ -360,7 +368,6 @@ def google_tasks_save(request):
     if request.method == "POST":
         try:
             data = json.loads(request.body)
-            print(data)
             selected_task_ids = data.get("selectedTasks", [])
             
             if not selected_task_ids:
@@ -519,10 +526,24 @@ def new_task(request):
     
     return JsonResponse({"error": "Method not allowed"}, status=405)
 
+@csrf_exempt
+def delete_task(request, task_id):
+    if request.method == "DELETE":
+        try:
+            task = Task.objects.get(id=task_id, user=request.user)
+            task.delete()
+            return JsonResponse({"message": "Task deleted successfully."}, status=200)
+        except Task.DoesNotExist:
+            return JsonResponse({"error": "Task not found."}, status=404)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+    
+    return JsonResponse({"error": "Method not allowed"}, status=405)
+        
 def fetch_assignments(request):
     assignments = Task.objects.filter(user=request.user).order_by("due_date")
     assignments_list = list(assignments.values("title", "description", "due_date", 
-                    "importance", "source", "completed", "status", "id", "time_estimate"))
+                    "source", "completed", "status", "id", "time_estimate"))
     return JsonResponse({"assignments": assignments_list})
 
 @csrf_exempt
@@ -773,26 +794,17 @@ def schedule_tasks(request):
             print("Unexpected error:", str(e))
             return JsonResponse({"error": str(e)}, status=500)
             
-def create_subtasks(request):
-    if request.method == "POST":
-        data = json.loads(request.body)
-        task_id = data.get("task_id")
-        print(f"Creating subtasks for task {task_id}")
-        return JsonResponse({"message": "Subtasks created successfully."}, status=200)
-
-@csrf_exempt
-def delete_task(request, task_id):
-    if request.method == "DELETE":
-        try:
-            task = Task.objects.get(id=task_id, user=request.user)
-            task.delete()
-            return JsonResponse({"message": "Task deleted successfully."}, status=200)
-        except Task.DoesNotExist:
-            return JsonResponse({"error": "Task not found."}, status=404)
-        except Exception as e:
-            return JsonResponse({"error": str(e)}, status=500)
+def format_timedelta(td):
+    """Convert timedelta to readable format."""
+    total_minutes = int(td.total_seconds() / 60)
+    hours = total_minutes // 60
+    minutes = total_minutes % 60
     
-    return JsonResponse({"error": "Method not allowed"}, status=405)
-        
-        
+    if hours > 0 and minutes > 0:
+        return f"{hours}h {minutes}m"
+    elif hours > 0:
+        return f"{hours}h"
+    else:
+        return f"{minutes}m"
+
 

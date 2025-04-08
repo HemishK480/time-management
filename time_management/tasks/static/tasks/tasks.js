@@ -4,21 +4,27 @@ document.addEventListener('DOMContentLoaded', function() {
     fetchTasks(); 
 
     document.querySelectorAll(".new-task").forEach(function(new_button) {
-        new_button.addEventListener('click', function() {
-            let new_task_div = document.getElementById("taskModal");
-            new_task_div.classList.add("show");
+        new_button.addEventListener('click', function(e) {
+            // Add focus for ripple effect
+            this.focus();
             
-            const status = this.getAttribute("data-status"); 
-    
-            document.getElementById("status-selector").value = status;
-            document.getElementById("task-title").value = "";
-            document.getElementById("due-date").value = "";
-            document.getElementById("task-description").value = "";
-            document.getElementById("time-estimate").value = "";
+            // Add a small delay before showing the modal for better animation
+            setTimeout(() => {
+                let new_task_div = document.getElementById("taskModal");
+                new_task_div.classList.add("show");
+                
+                const status = this.getAttribute("data-status"); 
+        
+                document.getElementById("status-selector").value = status;
+                document.getElementById("task-title").value = "";
+                document.getElementById("due-date").value = "";
+                document.getElementById("task-description").value = "";
+                document.getElementById("time-estimate").value = "";
 
-            displayNewTaskModal()
-        })
-    })
+                displayNewTaskModal();
+            }, 300); // Delay to allow ripple animation to be visible
+        });
+    });
     
     
 });
